@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>SocketHttpListener.AspNetCore.Server</id>
+    <version>1.0.0.0</version>
+    <authors>flaub</authors>
+    <owners>flaub</owners>
+    <projectUrl>https://github.com/flaub/AspNetCore-SocketHttpListener</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Cross-platform support for ASP.NET Core on the Mono runtime</description>
+    <copyright>Copyright 2017</copyright>
+    <dependencies>
+      <group targetFramework="net451">
+        <dependency id="SocketHttpListener" version="1.0.50" />
+        <dependency id="Microsoft.AspNetCore.Hosting" version="1.1.0"/>
+      </group>
+    </dependencies>
+  </metadata>
+</package>
