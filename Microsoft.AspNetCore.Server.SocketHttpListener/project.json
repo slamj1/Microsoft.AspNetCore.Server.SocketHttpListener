@@ -1,10 +1,10 @@
 {
-  "version": "1.0.0-*",
+  "version": "1.0.0",
   "buildOptions": {
     "debugType": "portable"
   },
   "dependencies": {
-    "Microsoft.AspNetCore.Hosting" : "1.1.0",
+    "Microsoft.AspNetCore.Hosting" : "1.0.0",
     "SocketHttpListener": "1.0.50"
   },
   "frameworks": {

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SocketHttpListener.Net;
 
-namespace SocketHttpListener.AspNetCore.Server
+namespace Microsoft.AspNetCore.Server.SocketHttpListener
 {
 	public class SocketHttpListenerServer : IServer
 	{

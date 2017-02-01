@@ -3,7 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SocketHttpListener.AspNetCore.Server
+namespace Microsoft.AspNetCore.Server.SocketHttpListener
 {
 	internal class ResponseStream : Stream
 	{

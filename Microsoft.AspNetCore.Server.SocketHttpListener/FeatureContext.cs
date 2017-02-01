@@ -10,7 +10,7 @@ using SocketHttpListener.Net;
 using IPAddress = System.Net.IPAddress;
 using HttpListenerContext = SocketHttpListener.Net.HttpListenerContext;
 
-namespace SocketHttpListener.AspNetCore.Server
+namespace Microsoft.AspNetCore.Server.SocketHttpListener
 {
 	class FeatureContext :
 		IHttpConnectionFeature,

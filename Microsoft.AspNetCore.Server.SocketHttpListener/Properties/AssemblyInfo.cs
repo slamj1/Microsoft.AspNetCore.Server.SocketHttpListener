@@ -6,12 +6,12 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("SocketHttpListener.AspNetCore.Server")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Microsoft.AspNetCore.Server.SocketHttpListener")]
+[assembly: AssemblyDescription("SocketHttpListener web server support for ASP.NET Core")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SocketHttpListener.AspNetCore.Server")]
-[assembly: AssemblyCopyright("Copyright ©  2017")]
+[assembly: AssemblyCompany("Frank Laub")]
+[assembly: AssemblyProduct("Microsoft.AspNetCore.Server.SocketHttpListener")]
+[assembly: AssemblyCopyright("Copyright © 2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

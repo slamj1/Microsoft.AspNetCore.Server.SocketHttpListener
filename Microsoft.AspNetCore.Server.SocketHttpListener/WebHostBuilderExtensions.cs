@@ -1,9 +1,10 @@
 ﻿using System;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Server.SocketHttpListener;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace SocketHttpListener.AspNetCore.Server
+// ReSharper disable once CheckNamespace
+namespace Microsoft.AspNetCore.Hosting
 {
 	public static class WebHostBuilderExtensions
 	{

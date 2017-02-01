@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography.X509Certificates;
 
-namespace SocketHttpListener.AspNetCore.Server
+namespace Microsoft.AspNetCore.Server.SocketHttpListener
 {
 	public class SocketHttpListenerOptions
 	{

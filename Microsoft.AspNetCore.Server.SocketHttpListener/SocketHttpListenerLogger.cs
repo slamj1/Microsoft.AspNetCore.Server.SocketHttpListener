@@ -5,7 +5,7 @@ using Patterns.Logging;
 using SocketHttpListener.Net;
 using ILogger = Patterns.Logging.ILogger;
 
-namespace SocketHttpListener.AspNetCore.Server
+namespace Microsoft.AspNetCore.Server.SocketHttpListener
 {
 	class SocketHttpListenerLogger : ILogger
 	{

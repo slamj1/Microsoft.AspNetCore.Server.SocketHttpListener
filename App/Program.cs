@@ -1,6 +1,5 @@
 using System.IO;
 using Microsoft.AspNetCore.Hosting;
-using SocketHttpListener.AspNetCore.Server;
 
 namespace WebApplication
 {

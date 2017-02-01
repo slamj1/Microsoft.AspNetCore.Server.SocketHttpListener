@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace SocketHttpListener.AspNetCore.Server
+namespace Microsoft.AspNetCore.Server.SocketHttpListener
 {
 	internal class LimitedReader : Stream
 	{
