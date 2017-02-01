@@ -66,7 +66,7 @@ namespace SocketHttpListener.AspNetCore.Server
 
 			foreach (var address in Features.Get<IServerAddressesFeature>().Addresses)
 			{
-				_listener.Prefixes.Add(address);
+				_listener.Prefixes.Add(new Uri(address).ToString());
 			}
 			_listener.Start();
 		}

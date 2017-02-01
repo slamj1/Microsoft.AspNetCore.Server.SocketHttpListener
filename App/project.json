@@ -3,7 +3,9 @@
 
   "dependencies": {
     "System.Native": "1.0.0-rc4-004707",
-    "SocketHttpListener.AspNetCore.Server": "1.0.0",
+    "SocketHttpListener.AspNetCore.Server": {
+      "target": "project"
+    },
     "Microsoft.AspNetCore.Authentication.Cookies": "1.1.0",
     "Microsoft.AspNetCore.Diagnostics": "1.1.0",
     "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": "1.1.0",
@@ -85,11 +87,6 @@
       "appsettings.json",
       "web.config"
     ]
-  },
-
-  "scripts": {
-    "prepublish": [ "npm install", "bower install", "gulp clean", "gulp min" ],
-    "postpublish": [ "dotnet publish-iis --publish-folder %publish:OutputPath% --framework %publish:FullTargetFramework%" ]
   },
 
   "tooling": {

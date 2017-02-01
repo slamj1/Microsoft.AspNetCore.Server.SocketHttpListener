@@ -13,11 +13,10 @@ namespace WebApplication
         public static void Main(string[] args)
         {
             var host = new WebHostBuilder()
-                .UseUrls("http://*:5000/")
+                .UseMonoCompatibility()
                 .UseSocketHttpListener()
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseStartup<Startup>()
-                .UseMonoCompatibility()
                 .Build();
 
             host.Run();
