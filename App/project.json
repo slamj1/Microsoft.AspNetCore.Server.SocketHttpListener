@@ -3,6 +3,7 @@
 
   "dependencies": {
     "System.Native": "1.0.0-rc4-004707",
+    "Microsoft.AspNetCore.Mono": "0.1.2",
     "SocketHttpListener.AspNetCore.Server": {
       "target": "project"
     },

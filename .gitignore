@@ -4,3 +4,4 @@ bin/
 obj/
 *.nupkg
 .DS_Store
+project.lock.json

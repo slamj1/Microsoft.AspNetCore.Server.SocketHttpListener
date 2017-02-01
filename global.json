@@ -1,3 +1,6 @@
 {
-    "projects": [ "SocketHttpListener.AspNetCore.Server", "App" ]
+    "projects": [
+        "App",
+        "SocketHttpListener.AspNetCore.Server"
+    ]
 }
