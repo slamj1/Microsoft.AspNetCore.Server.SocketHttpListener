@@ -16,7 +16,7 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 		public IFeatureCollection Features { get; } = new FeatureCollection();
 
 		public SocketHttpListenerServer(
-			IOptions<SocketHttpListenerOptions> options, 
+			IOptions<SocketHttpListenerOptions> options,
 			ILoggerFactory loggerFactory)
 		{
 			_logger = loggerFactory.CreateLogger(typeof(SocketHttpListenerServer).FullName);
@@ -64,9 +64,11 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 				}
 			};
 
+			_listener.Prefixes.Clear();
 			foreach (var address in Features.Get<IServerAddressesFeature>().Addresses)
 			{
-				_listener.Prefixes.Add(new Uri(address).ToString());
+				var withPath = address.EndsWith("/") ? address : address + "/";
+				_listener.Prefixes.Add(withPath);
 			}
 			_listener.Start();
 		}
