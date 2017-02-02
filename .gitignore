@@ -5,3 +5,5 @@ obj/
 *.nupkg
 .DS_Store
 project.lock.json
+.vs/
+*.xproj.user
