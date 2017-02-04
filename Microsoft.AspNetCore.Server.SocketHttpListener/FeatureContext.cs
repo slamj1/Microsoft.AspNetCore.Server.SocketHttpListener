@@ -1,47 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Primitives;
-using SocketHttpListener.Net;
 using IPAddress = System.Net.IPAddress;
 using HttpListenerContext = SocketHttpListener.Net.HttpListenerContext;
 
 namespace Microsoft.AspNetCore.Server.SocketHttpListener
 {
 	class FeatureContext :
+		IHttpBufferingFeature,
 		IHttpConnectionFeature,
 		IHttpRequestFeature,
 		IHttpResponseFeature,
 		IHttpSendFileFeature
 	{
-		private readonly HttpListenerContext _context;
-		private bool _hasStarted;
-		private IHeaderDictionary _requestHeaders;
-		private IHeaderDictionary _responseHeaders;
+		private const int BufferSize = 64 * 1024;
 
-		private List<Tuple<Func<object, Task>, object>> _onStartingActions;
-		private List<Tuple<Func<object, Task>, object>> _onCompletedActions;
+		private readonly HttpListenerContext _context;
+		private readonly IHeaderDictionary _requestHeaders;
+		private readonly IHeaderDictionary _responseHeaders;
+
+		private readonly List<Tuple<Func<object, Task>, object>> _onStartingActions;
+		private readonly List<Tuple<Func<object, Task>, object>> _onCompletedActions;
 		private bool _responseStarted;
 		private bool _completed;
-		private IPAddress _remoteIpAddress;
-		private IPAddress _localIpAddress;
-		private int _remotePort;
-		private int _localPort;
-		private readonly Stream _buffer;
 		private Stream _responseStream;
 		private Stream _requestStream;
-		private string _queryString;
-		private string _rawTarget;
-		private string _path;
-		private string _pathBase;
-		private string _method;
-		private string _scheme;
-		private string _protocol;
-		private string _connectionId;
 		private Func<Task> _onFinished;
 
 		public FeatureContext(HttpListenerContext context)
@@ -55,107 +43,90 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 			Features.Set<IHttpResponseFeature>(this);
 			Features.Set<IHttpConnectionFeature>(this);
 			Features.Set<IHttpSendFileFeature>(this);
+			Features.Set<IHttpBufferingFeature>(this);
 
-			_requestHeaders = new HeaderDictionary();
-			foreach (var key in context.Request.Headers.AllKeys)
-			{
-				_requestHeaders.Add(key, new StringValues(context.Request.Headers.GetValues(key)));
-			}
+			_requestHeaders = new HeaderDictionary(context.Request.Headers);
+			_responseHeaders = new HeaderDictionary(context.Response.Headers);
 
-			_responseHeaders = new HeaderDictionary();
-			foreach (var key in context.Response.Headers.AllKeys)
-			{
-				_responseHeaders.Add(key, new StringValues(context.Response.Headers.GetValues(key)));
-			}
+			var buffer = new MemoryStream();
 
-			_method = context.Request.HttpMethod;
-			_path = Uri.UnescapeDataString(context.Request.Url.AbsolutePath);
-			_pathBase = string.Empty;
-			_queryString = context.Request.Url.Query;
-			_rawTarget = context.Request.RawUrl;
-			_scheme = context.Request.Url.Scheme;
-			_protocol = $"HTTP/{context.Request.ProtocolVersion}";
-
-			_connectionId = context.Request.RequestTraceIdentifier.ToString();
-			_localIpAddress = context.Request.LocalEndPoint.Address;
-			_localPort = context.Request.LocalEndPoint.Port;
-			_remoteIpAddress = context.Request.RemoteEndPoint.Address;
-			_remotePort = context.Request.RemoteEndPoint.Port;
-
-			_buffer = new MemoryStream();
 			_requestStream = context.Request.InputStream;
-			_responseStream = new ResponseStream(_buffer, OnStart);
+			_responseStream = new ResponseStream(buffer, OnStart);
 
 			_onFinished = async () =>
 			{
-				_context.Response.Headers = MakeWebHeaders();
-				_context.Response.ContentLength64 = _buffer.Length;
+				_context.Response.ContentLength64 = buffer.Length;
 
-				_buffer.Seek(0, SeekOrigin.Begin);
-				await _buffer.CopyToAsync(_context.Response.OutputStream);
+				buffer.Seek(0, SeekOrigin.Begin);
+				await buffer.CopyToAsync(_context.Response.OutputStream);
 
 				_context.Response.OutputStream.Flush();
-				_context.Response.Close();
 			};
 		}
 
 		internal IFeatureCollection Features { get; }
 
+		#region IHttpConnectionFeature
+
 		string IHttpConnectionFeature.ConnectionId
 		{
-			get { return _connectionId; }
-			set { _connectionId = value; }
+			get { return _context.Request.RequestTraceIdentifier.ToString(); }
+			set { throw new NotSupportedException(); }
 		}
 
 		IPAddress IHttpConnectionFeature.RemoteIpAddress
 		{
-			get { return _remoteIpAddress; }
-			set { _remoteIpAddress = value; }
+			get { return _context.Request.RemoteEndPoint.Address; }
+			set { throw new NotSupportedException(); }
 		}
 
 		IPAddress IHttpConnectionFeature.LocalIpAddress
 		{
-			get { return _localIpAddress; }
-			set { _localIpAddress = value; }
+			get { return _context.Request.LocalEndPoint.Address; }
+			set { throw new NotSupportedException(); }
 		}
 
 		int IHttpConnectionFeature.RemotePort
 		{
-			get { return _remotePort; }
-			set { _remotePort = value; }
+			get { return _context.Request.RemoteEndPoint.Port; }
+			set { throw new NotSupportedException(); }
 		}
 
 		int IHttpConnectionFeature.LocalPort
 		{
-			get { return _localPort; }
-			set { _localPort = value; }
+			get { return _context.Request.LocalEndPoint.Port; }
+			set { throw new NotSupportedException(); }
 		}
+
+		#endregion
+
+		#region IHttpRequestFeature
 
 		/// <summary>
 		/// The HTTP-version as defined in RFC 7230. E.g. "HTTP/1.1"
 		/// </summary>
 		string IHttpRequestFeature.Protocol
 		{
-			get { return _protocol; }
-			set { _protocol = value; }
+			get { return $"HTTP/{_context.Request.ProtocolVersion}"; }
+			set { throw new NotSupportedException(); }
 		}
 
 		string IHttpRequestFeature.Scheme
 		{
-			get { return _scheme; }
-			set { _scheme = value; }
+			get { return _context.Request.Url.Scheme; }
+			set { throw new NotSupportedException(); }
 		}
 
 		string IHttpRequestFeature.Method
 		{
-			get { return _method; }
-			set { _method = value; }
+			get { return _context.Request.HttpMethod; }
+			set { throw new NotSupportedException(); }
 		}
 
 		string IHttpRequestFeature.PathBase
 		{
-			get { return _pathBase; }
-			set { _pathBase = value; }
+			get { return string.Empty; }
+			set { throw new NotSupportedException(); }
 		}
 
 		/// <summary>
@@ -165,8 +136,8 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 		/// </summary>
 		string IHttpRequestFeature.Path
 		{
-			get { return _path; }
-			set { _path = value; }
+			get { return Uri.UnescapeDataString(_context.Request.Url.AbsolutePath); }
+			set { throw new NotSupportedException(); }
 		}
 
 		/// <summary>
@@ -177,8 +148,8 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 		/// </summary>
 		string IHttpRequestFeature.QueryString
 		{
-			get { return _queryString; }
-			set { _queryString = value; }
+			get { return _context.Request.Url.Query; }
+			set { throw new NotSupportedException(); }
 		}
 
 		/// <summary>
@@ -189,19 +160,35 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 		/// </summary>
 		string IHttpRequestFeature.RawTarget
 		{
-			get { return _rawTarget; }
-			set { _rawTarget = value; }
+			get { return _context.Request.RawUrl; }
+			set { throw new NotSupportedException(); }
 		}
+
+		IHeaderDictionary IHttpRequestFeature.Headers
+		{
+			get { return _requestHeaders; }
+			set { throw new NotSupportedException(); }
+		}
+
+		Stream IHttpRequestFeature.Body
+		{
+			get { return _requestStream; }
+			set { _requestStream = value; }
+		}
+
+		#endregion
+
+		#region IHttpResponseFeature
 
 		void IHttpResponseFeature.OnStarting(Func<object, Task> callback, object state)
 		{
 			if (callback == null)
 				throw new ArgumentNullException(nameof(callback));
 
-			if (_onStartingActions == null)
+			if (_responseStarted)
 				throw new InvalidOperationException("Cannot register new callbacks, the response has already started.");
 
-			_onStartingActions.Add(new Tuple<Func<object, Task>, object>(callback, state));
+			_onStartingActions.Add(Tuple.Create(callback, state));
 		}
 
 		void IHttpResponseFeature.OnCompleted(Func<object, Task> callback, object state)
@@ -209,10 +196,10 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 			if (callback == null)
 				throw new ArgumentNullException(nameof(callback));
 
-			if (_onCompletedActions == null)
+			if (_completed)
 				throw new InvalidOperationException("Cannot register new callbacks, the response has already completed.");
 
-			_onCompletedActions.Add(new Tuple<Func<object, Task>, object>(callback, state));
+			_onCompletedActions.Add(Tuple.Create(callback, state));
 		}
 
 		int IHttpResponseFeature.StatusCode
@@ -230,7 +217,7 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 		IHeaderDictionary IHttpResponseFeature.Headers
 		{
 			get { return _responseHeaders; }
-			set { _responseHeaders = value; }
+			set { throw new NotSupportedException(); }
 		}
 
 		Stream IHttpResponseFeature.Body
@@ -239,28 +226,18 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 			set { _responseStream = value; }
 		}
 
-		bool IHttpResponseFeature.HasStarted => _hasStarted;
+		bool IHttpResponseFeature.HasStarted => _responseStarted;
 
-		IHeaderDictionary IHttpRequestFeature.Headers
-		{
-			get { return _requestHeaders; }
-			set { _requestHeaders = value; }
-		}
+		#endregion
 
-		Stream IHttpRequestFeature.Body
-		{
-			get { return _requestStream; }
-			set { _requestStream = value; }
-		}
+		#region IHttpSendFileFeature
 
 		async Task IHttpSendFileFeature.SendFileAsync(
-			string path, 
-			long offset, 
-			long? count, 
+			string path,
+			long offset,
+			long? count,
 			CancellationToken cancellation)
 		{
-			const int bufferSize = 64 * 1024;
-
 			await OnStart();
 
 			if (!count.HasValue)
@@ -271,7 +248,6 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 
 			_onFinished = async () =>
 			{
-				_context.Response.Headers = MakeWebHeaders();
 				_context.Response.ContentLength64 = count.Value;
 
 				using (var fs = File.OpenRead(path))
@@ -279,31 +255,29 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 					fs.Seek(offset, SeekOrigin.Begin);
 
 					var reader = new LimitedReader(fs, count.Value);
-					await reader.CopyToAsync(_context.Response.OutputStream, bufferSize, cancellation);
+					await reader.CopyToAsync(_context.Response.OutputStream, BufferSize, cancellation);
 				}
 
 				_context.Response.OutputStream.Flush();
-				_context.Response.Close();
 			};
 		}
 
-		WebHeaderCollection MakeWebHeaders()
+		#endregion
+
+		#region IHttpBufferingFeature
+
+		void IHttpBufferingFeature.DisableRequestBuffering()
 		{
-			var ret = new WebHeaderCollection();
-			foreach (var item in _responseHeaders)
-			{
-				foreach (var value in item.Value)
-				{
-					ret.Add(item.Key, value);
-				}
-			}
-			return ret;
+			// ignored, we don't do buffering on requests
 		}
 
-		internal async Task OnFinish()
+		void IHttpBufferingFeature.DisableResponseBuffering()
 		{
-			await _onFinished();
+			_responseStream = new ResponseStream(_context.Response.OutputStream, OnStart);
+			_onFinished = () => Task.FromResult(0);
 		}
+
+		#endregion
 
 		internal async Task OnStart()
 		{
@@ -311,45 +285,26 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 				return;
 
 			_responseStarted = true;
-			_hasStarted = true;
-			await NotifyOnStartingAsync();
-		}
 
-		private async Task NotifyOnStartingAsync()
-		{
-			var actions = _onStartingActions;
-			_onStartingActions = null;
-			if (actions == null)
-				return;
-
-			actions.Reverse();
-			foreach (var pair in actions)
+			foreach (var pair in Enumerable.Reverse(_onStartingActions))
 			{
 				await pair.Item1(pair.Item2);
 			}
 		}
 
-		internal Task OnCompleted()
+		internal async Task OnCompleted()
 		{
 			if (_completed)
-				return Task.FromResult(0);
-
-			_completed = true;
-			return NotifyOnCompletedAsync();
-		}
-
-		private async Task NotifyOnCompletedAsync()
-		{
-			var actions = _onCompletedActions;
-			_onCompletedActions = null;
-			if (actions == null)
 				return;
 
-			actions.Reverse();
-			foreach (var pair in actions)
+			_completed = true;
+
+			foreach (var pair in Enumerable.Reverse(_onCompletedActions))
 			{
 				await pair.Item1(pair.Item2);
 			}
+
+			await _onFinished();
 		}
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http.Features;
@@ -38,29 +39,34 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 				var appContext = application.CreateContext(featureContext.Features);
 				try
 				{
-					try
-					{
-						await application.ProcessRequestAsync(appContext);
-						await featureContext.OnStart();
-						application.DisposeContext(appContext, null);
-						await featureContext.OnFinish();
-					}
-					finally
-					{
-						await featureContext.OnCompleted();
-					}
+					await application.ProcessRequestAsync(appContext);
+					await featureContext.OnStart();
+					application.DisposeContext(appContext, null);
+					await featureContext.OnCompleted();
 				}
 				catch (Exception ex)
 				{
-					_logger.LogError(0, ex, "ProcessRequestAsync");
-
-					//context.Response.Abort();
-					context.Response.Headers.Clear();
-					context.Response.StatusCode = 500;
-					context.Response.ContentLength64 = 0;
-					context.Response.Close();
+					_logger.LogError(0, ex, "Unhandled exception in OnContext");
 
 					application.DisposeContext(appContext, ex);
+
+					try
+					{
+						context.Response.Headers.Clear();
+						context.Response.StatusCode = 500;
+						context.Response.ContentLength64 = 0;
+
+						using (var writer = new StreamWriter(context.Response.OutputStream))
+							writer.Write(ex.ToString());
+					}
+					catch
+					{
+						// ignored
+					}
+				}
+				finally
+				{
+					context.Response.Close();
 				}
 			};
 
