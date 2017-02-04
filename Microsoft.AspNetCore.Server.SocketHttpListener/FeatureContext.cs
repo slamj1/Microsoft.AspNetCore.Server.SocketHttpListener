@@ -28,6 +28,7 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 		private readonly List<Tuple<Func<object, Task>, object>> _onCompletedActions;
 		private bool _responseStarted;
 		private bool _completed;
+		private string _requestPath;
 		private Stream _responseStream;
 		private Stream _requestStream;
 		private Func<Task> _onFinished;
@@ -45,6 +46,7 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 			Features.Set<IHttpSendFileFeature>(this);
 			Features.Set<IHttpBufferingFeature>(this);
 
+			_requestPath = Uri.UnescapeDataString(context.Request.Url.AbsolutePath);
 			_requestHeaders = new HeaderDictionary(context.Request.Headers);
 			_responseHeaders = new HeaderDictionary(context.Response.Headers);
 
@@ -136,8 +138,8 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 		/// </summary>
 		string IHttpRequestFeature.Path
 		{
-			get { return Uri.UnescapeDataString(_context.Request.Url.AbsolutePath); }
-			set { throw new NotSupportedException(); }
+			get { return _requestPath; }
+			set { _requestPath = value; }
 		}
 
 		/// <summary>
