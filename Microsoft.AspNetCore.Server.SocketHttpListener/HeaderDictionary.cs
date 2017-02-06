@@ -54,7 +54,12 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 
 		public void CopyTo(KeyValuePair<string, StringValues>[] array, int arrayIndex)
 		{
-			throw new NotImplementedException();
+			for (var i = arrayIndex; i < array.Length - arrayIndex; i++)
+			{
+				var key = _collection.GetKey(i);
+				var values = _collection.GetValues(i);
+				array[i] = new KeyValuePair<string, StringValues>(key, values);
+			}
 		}
 
 		public bool Remove(KeyValuePair<string, StringValues> item) => Remove(item.Key);

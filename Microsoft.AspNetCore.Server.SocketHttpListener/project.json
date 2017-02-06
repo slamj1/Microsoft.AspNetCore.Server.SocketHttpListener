@@ -1,5 +1,5 @@
 {
-    "version": "1.0.4",
+    "version": "1.0.6",
     "authors": [
         "Frank Laub"
     ],
@@ -10,7 +10,7 @@
         "repository": {
             "url": "https://github.com/flaub/Microsoft.AspNetCore.Server.SocketHttpListener"
         },
-        "releaseNotes": "Adding nuget metadata."
+        "releaseNotes": "Implement HeaderDictionary.CopyTo to support Developer Exception pages"
     },
     "buildOptions": {
         "debugType": "portable"

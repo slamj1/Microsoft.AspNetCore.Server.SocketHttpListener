@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApplication.Controllers
@@ -20,7 +21,7 @@ namespace WebApplication.Controllers
         {
             ViewData["Message"] = "Your contact page.";
 
-            return View();
+	        throw new ApplicationException("Test that CopyTo works");
         }
 
         public IActionResult Error()
