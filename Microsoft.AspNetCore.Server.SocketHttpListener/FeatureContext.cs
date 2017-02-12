@@ -49,7 +49,12 @@ namespace Microsoft.AspNetCore.Server.SocketHttpListener
 
 			_requestScheme = context.Request.Url.Scheme;
 			_requestPath = Uri.UnescapeDataString(context.Request.Url.AbsolutePath);
-			_requestHeaders = new HeaderDictionary(context.Request.Headers);
+
+			_requestHeaders = new Http.HeaderDictionary(context.Request.Headers.Count);
+			foreach (string key in context.Request.Headers)
+			{
+				_requestHeaders.Add(key, context.Request.Headers.Get(key));
+			}
 			_responseHeaders = new HeaderDictionary(context.Response.Headers);
 
 			var buffer = new MemoryStream();
